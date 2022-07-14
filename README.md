@@ -2,7 +2,7 @@
 Implementation of binary distribution in the Grassmann formalism, including conditional version.
 The Grassmann formalism was introduced in [1].
 
-See the pdf file for more explanations.
+See the [pdf](https://github.com/mackelab/grassmann_binary_distribution/blob/main/notes_grassmann_formalism.pdf)  file for more explanations.
 
 ## File structure
 - grassmann_distribution/:
