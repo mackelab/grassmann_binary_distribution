@@ -12,7 +12,9 @@ See the [pdf](https://github.com/mackelab/grassmann_binary_distribution/blob/mai
 - notebooks/: some example notebooks how to define the distributions and an example to fit a mogr to dichotomized gauss data
 - data: samples for a dichotomized gauss distribution, see [2] for details. 
 
+## Install the package:
 
+`pip install GrassmannBinaryDistribution`
 
 
 
