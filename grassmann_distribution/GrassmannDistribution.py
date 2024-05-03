@@ -19,7 +19,9 @@ class GrassmannBinary:
     """
 
     def __init__(
-        self, sigma: Tensor, lambd=None,
+        self,
+        sigma: Tensor,
+        lambd=None,
     ):
         assert len(sigma.shape) == 2
         assert check_valid_sigma(sigma)
@@ -33,15 +35,18 @@ class GrassmannBinary:
         return self.prob_grassmann(x, self.sigma)
 
     @staticmethod
-    def prob_grassmann(x: Tensor, sigma: Tensor,) -> Tensor:  # n x d  # (d x d)
+    def prob_grassmann(
+        x: Tensor,
+        sigma: Tensor,
+    ) -> Tensor:  # n x d  # (d x d)
         """
         Return the probability of `x` under a GrassmannBinary with specified parameters.
         As standalone method.
         Args:
             x: Location at which to evaluate the Grassmann, aka binary vector.
-            sigma: 
+            sigma:
         Returns:
-            Log-probabilities of each input.
+            probabilities of each input.
         """
         assert len(x.shape) == 2  # check dim: batch, d
 
@@ -156,7 +161,10 @@ class GrassmannBinary:
 
         return sigma_r
 
-    def sample(self, num_samples: int,) -> Tensor:
+    def sample(
+        self,
+        num_samples: int,
+    ) -> Tensor:
         """
         Return samples of a GrassmannBinary with specified parameters.
         Args:
@@ -202,7 +210,7 @@ Mixture of Grassmann
 
 class MoGrassmannBinary:
     """
-    Mixture of GrassmannBinary 
+    Mixture of GrassmannBinary
     """
 
     def __init__(self, sigma: Tensor, mixing_p: Tensor):
@@ -233,7 +241,11 @@ class MoGrassmannBinary:
         return self.prob_mograssmann(x, self.mixing_p, self.sigma)
 
     @staticmethod
-    def prob_mograssmann(inputs: Tensor, mixing_p: Tensor, sigmas: Tensor,) -> Tensor:
+    def prob_mograssmann(
+        inputs: Tensor,
+        mixing_p: Tensor,
+        sigmas: Tensor,
+    ) -> Tensor:
         """
         Return the probability of `inputs` under a MoGrassmann with specified parameters.
         Unlike the `prob()` method, this method is fully detached from the neural
@@ -244,7 +256,7 @@ class MoGrassmannBinary:
             mixing_p: weights of each component of the MoGrassmann. Shape: (num_components).
             sigmas: Parameters of each MoGrassmann, shape (num_components, parameter_dim, parameter_dim).
         Returns:
-            Log-probabilities of each input.
+            probabilities of each input.
         """
         assert len(inputs.shape) == 2  # check dim: batch, dim
         assert sigmas.shape[0] == mixing_p.shape[0]  # check: n_components
@@ -392,7 +404,10 @@ class MoGrassmannBinary:
 
         return sigma_r
 
-    def sample(self, num_samples: int,) -> Tensor:
+    def sample(
+        self,
+        num_samples: int,
+    ) -> Tensor:
         """
         Return samples of a moGrassmannBinary with specified parameters.
         Args:
@@ -440,51 +455,3 @@ class MoGrassmannBinary:
             count += n
 
         return samples[torch.randperm(num_samples)]  # ,ps
-
-
-if __name__ == "__main__":
-    """
-    testing
-    """
-    # define sigma
-    _sigma = torch.tensor(
-        [
-            [0.85, -0.34, -0.07, 0.16, -0.06],
-            [-0.11, 0.46, 0.06, -0.09, -0.05],
-            [-0.16, -0.42, 0.74, 0.66, -0.28],
-            [0.01, -0.08, -0.13, 0.70, -0.30],
-            [0.02, 0.15, -0.04, 0.23, 0.80],
-        ]
-    )
-
-    # this is what lamda should look like
-    lambd_check = torch.tensor(
-        [
-            [1.2977, 0.9094, 0.0147, -0.2190, 0.0772],
-            [0.2638, 2.2488, -0.1012, 0.2521, 0.2195],
-            [0.3605, 1.0785, 1.1217, -1.0340, 0.0993],
-            [0.0456, 0.2466, 0.2035, 1.0937, 0.5002],
-            [-0.0770, -0.4614, 0.0162, -0.4079, 1.0681],
-        ]
-    )
-
-    # define three example events
-    x = torch.zeros((3, 5))
-    x[0, 0] = 1
-
-    x[1, 1] = 1
-
-    x[2, 0] = 0
-    x[2, 1] = 1
-    x[2, 2] = 0
-    x[2, 3] = 0
-    x[2, 4] = 1
-
-    # x should have these probs
-    prob_x_check = torch.tensor([0.0232, 0.0018, 0.0101])
-
-    gr = GrassmannBinary(_sigma)
-
-    assert torch.allclose(gr.lambd, lambd_check, atol=1e-4)
-    assert torch.allclose(gr.prob(x), prob_x_check, atol=1e-4)
-    assert check_valid_sigma(_sigma)
