@@ -29,6 +29,7 @@ class GrassmannBinary:
         self.sigma = sigma
         if lambd == None:
             self.lambd = torch.inverse(sigma)  # this is not used at the moment!
+        self._epsilon = 1e-4  # small value to avoid singular matrices
 
     def prob(self, x):
         # Todo: make more efficient by only computing once per oberved states?
@@ -128,11 +129,10 @@ class GrassmannBinary:
 
         return cov / (std_mat + 1e-8)
 
-    def conditional_sigma(self, xc: Tensor, epsilon=1e-6) -> Tensor:
+    def conditional_sigma(self, xc: Tensor) -> Tensor:
         """
         returns the conditional grassmann matrix for the remaining dimensions, given xc
             xc: Tensor of full dim, with "nan" in remaining positions. (batch_size x d)
-            epsilon: small value to avoid singular matrices
         """
         batch_size = xc.shape[0]
 
@@ -156,7 +156,7 @@ class GrassmannBinary:
                 @ torch.inverse(
                     self.sigma[mask][:, mask]  # sigma CC
                     - (torch.eye(dim_c) * (1 - xc[i][mask]))
-                    + torch.eye(dim_c) * epsilon
+                    + torch.eye(dim_c) * self._epsilon
                 )
                 @ self.sigma[mask][:, ~mask]  # sigma CR
             )
@@ -229,6 +229,7 @@ class MoGrassmannBinary:
         self.nc = sigma.shape[0]  # number of components
         self.sigma = sigma
         self.mixing_p = mixing_p
+        self._epsilon = 1e-4  # small value to avoid singular matrices
 
     def prob(self, x):
         """
@@ -373,11 +374,10 @@ class MoGrassmannBinary:
         std_mat = torch.outer(std, std)
         return cov / (std_mat + 1e-8)
 
-    def conditional_sigma(self, sigma: Tensor, xc: Tensor, epsilon=1e-6) -> Tensor:
+    def conditional_sigma(self, sigma: Tensor, xc: Tensor) -> Tensor:
         """
         returns the conditional grassmann matrix for the remaining dimensions, given xc
             xc: Tensor of full dim, with "nan" in remaining positions. (batch_size x d)
-            epsilon: small value to avoid singular matrices
         """
         batch_size = xc.shape[0]
 
@@ -404,7 +404,7 @@ class MoGrassmannBinary:
                 @ torch.inverse(
                     sigma[mask][:, mask]  # sigma CC
                     - (torch.eye(dim_c) * (1 - xc[i][mask]))
-                    + torch.eye(dim_c) * epsilon
+                    + torch.eye(dim_c) * self._epsilon
                 )
                 @ sigma[mask][:, ~mask]  # sigma CR
             )
