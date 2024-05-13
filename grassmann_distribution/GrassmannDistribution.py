@@ -128,10 +128,11 @@ class GrassmannBinary:
 
         return cov / (std_mat + 1e-8)
 
-    def conditional_sigma(self, xc: Tensor) -> Tensor:
+    def conditional_sigma(self, xc: Tensor, epsilon=1e-6) -> Tensor:
         """
         returns the conditional grassmann matrix for the remaining dimensions, given xc
             xc: Tensor of full dim, with "nan" in remaining positions. (batch_size x d)
+            epsilon: small value to avoid singular matrices
         """
         batch_size = xc.shape[0]
 
@@ -155,6 +156,7 @@ class GrassmannBinary:
                 @ torch.inverse(
                     self.sigma[mask][:, mask]  # sigma CC
                     - (torch.eye(dim_c) * (1 - xc[i][mask]))
+                    + torch.eye(dim_c) * epsilon
                 )
                 @ self.sigma[mask][:, ~mask]  # sigma CR
             )
@@ -371,10 +373,11 @@ class MoGrassmannBinary:
         std_mat = torch.outer(std, std)
         return cov / (std_mat + 1e-8)
 
-    def conditional_sigma(self, sigma: Tensor, xc: Tensor) -> Tensor:
+    def conditional_sigma(self, sigma: Tensor, xc: Tensor, epsilon=1e-6) -> Tensor:
         """
         returns the conditional grassmann matrix for the remaining dimensions, given xc
             xc: Tensor of full dim, with "nan" in remaining positions. (batch_size x d)
+            epsilon: small value to avoid singular matrices
         """
         batch_size = xc.shape[0]
 
@@ -391,6 +394,9 @@ class MoGrassmannBinary:
 
         for i in range(batch_size):
             mask = ~torch.isnan(xc[i])  # True if conditioned
+            # linalg.solve(A, B) == linalg.inv(A) @ B
+            # https://pytorch.org/docs/stable/generated/torch.linalg.inv.html#torch.linalg.inv
+            # problem here: B = sigma CR is not a square matrix
 
             sigma_r[i] = (
                 sigma[~mask][:, ~mask]  # sigma RR
@@ -398,6 +404,7 @@ class MoGrassmannBinary:
                 @ torch.inverse(
                     sigma[mask][:, mask]  # sigma CC
                     - (torch.eye(dim_c) * (1 - xc[i][mask]))
+                    + torch.eye(dim_c) * epsilon
                 )
                 @ sigma[mask][:, ~mask]  # sigma CR
             )
